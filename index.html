@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding the Standard Error of a Regression Coefficient</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Understanding the Standard Error of a Regression Coefficient</h1>
+        </header>
+
+        <section class="main-chart-section">
+            <div class="chart-container">
+                <canvas id="regressionChart"></canvas>
+            </div>
+        </section>
+
+        <section class="inputs">
+            <div class="input-group">
+                <label for="numObservations">Number of observations:</label>
+                <input type="number" id="numObservations" min="3" step="1" value="100">
+                <span class="validation-message" id="numObservations-validation"></span>
+            </div>
+            <div class="input-group">
+                <label for="varianceX">Variance of X:</label>
+                <input type="number" id="varianceX" min="0.01" max="6" step="0.1" value="1">
+                <span class="validation-message" id="varianceX-validation"></span>
+            </div>
+            <div class="input-group">
+                <label for="varianceError">Variance of error term:</label>
+                <input type="number" id="varianceError" min="0.01" step="1" value="400">
+                <span class="validation-message" id="varianceError-validation"></span>
+            </div>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
