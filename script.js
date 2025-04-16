@@ -6,6 +6,11 @@ let varianceErrorInput;
 let numObservationsValidation;
 let varianceXValidation;
 let varianceErrorValidation;
+let seValueElement;
+let rotateButton;
+let clearButton;
+let animationInProgress = false;
+let originalLineData = [];
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
@@ -16,6 +21,9 @@ document.addEventListener('DOMContentLoaded', () => {
     numObservationsValidation = document.getElementById('numObservations-validation');
     varianceXValidation = document.getElementById('varianceX-validation');
     varianceErrorValidation = document.getElementById('varianceError-validation');
+    seValueElement = document.getElementById('seValue');
+    rotateButton = document.getElementById('rotateButton');
+    clearButton = document.getElementById('clearButton');
     
     // Create the chart
     createRegressionChart();
@@ -99,6 +107,9 @@ function setupEventListeners() {
     numObservationsInput.addEventListener('input', validateAndUpdate);
     varianceXInput.addEventListener('input', validateAndUpdate);
     varianceErrorInput.addEventListener('input', validateAndUpdate);
+    
+    rotateButton.addEventListener('click', rotateRegressionLine);
+    clearButton.addEventListener('click', clearVisualization);
 }
 
 // Validate inputs and update the chart
@@ -141,10 +152,18 @@ function validateAndUpdate() {
 // Update the regression line based on input values
 function updateRegressionLine() {
     // Get input values
+    const numObservations = parseInt(numObservationsInput.value);
     const varianceX = parseFloat(varianceXInput.value);
+    const varianceError = parseFloat(varianceErrorInput.value);
     
     // Calculate v = sqrt(Variance of X)
     const v = Math.sqrt(varianceX);
+    
+    // Calculate se = sqrt(Variance of error term/(Number of observations times Variance of X))
+    const se = Math.sqrt(varianceError / (numObservations * varianceX));
+    
+    // Update the SE value display
+    seValueElement.textContent = se.toFixed(2);
     
     // Calculate points for the line with slope 1
     const x1 = 3 - v;
@@ -153,15 +172,102 @@ function updateRegressionLine() {
     const y2 = x2; // Since slope is 1 and we want the line to pass through (x2, x2)
     
     // Update the regression line data
-    regressionChart.data.datasets[0].data = [
+    const lineData = [
         { x: x1, y: y1 },
         { x: x2, y: y2 }
     ];
+    
+    regressionChart.data.datasets[0].data = lineData;
+    
+    // Store the original line data for rotation
+    originalLineData = [...lineData];
     
     // Update the chart
     regressionChart.update();
     
     // Log the values for debugging
-    console.log(`Variance of X: ${varianceX}, v: ${v}`);
+    console.log(`Variance of X: ${varianceX}, v: ${v}, se: ${se}`);
     console.log(`Line points: (${x1}, ${y1}) to (${x2}, ${y2})`);
+}
+
+// Rotate the regression line animation
+function rotateRegressionLine() {
+    if (animationInProgress) return;
+    
+    // Disable the button during animation
+    animationInProgress = true;
+    rotateButton.disabled = true;
+    
+    // Get the midpoint of the line
+    const midX = (originalLineData[0].x + originalLineData[1].x) / 2;
+    const midY = (originalLineData[0].y + originalLineData[1].y) / 2;
+    
+    // Original slope is 1
+    let currentSlope = 1;
+    let direction = 1; // 1 for increasing slope, -1 for decreasing
+    let animationStep = 0;
+    const totalSteps = 200; // Total animation steps
+    const maxSlope = 2; // Maximum slope to reach
+    
+    // Animation interval
+    const animationInterval = setInterval(() => {
+        animationStep++;
+        
+        // Calculate new slope based on animation progress
+        if (direction === 1 && currentSlope >= maxSlope) {
+            direction = -1; // Start decreasing
+        } else if (direction === -1 && currentSlope <= 0) {
+            direction = 1; // Start increasing again
+        }
+        
+        // Update slope
+        currentSlope += 0.02 * direction;
+        
+        // Calculate new points based on the slope and midpoint
+        const dx = 1; // Distance from midpoint
+        const newPoint1 = {
+            x: midX - dx,
+            y: midY - currentSlope * dx
+        };
+        
+        const newPoint2 = {
+            x: midX + dx,
+            y: midY + currentSlope * dx
+        };
+        
+        // Update the line
+        regressionChart.data.datasets[0].data = [newPoint1, newPoint2];
+        
+        // Update the chart
+        regressionChart.update();
+        
+        // Check if animation is complete
+        if (animationStep >= totalSteps) {
+            clearInterval(animationInterval);
+            
+            // Reset to original line
+            regressionChart.data.datasets[0].data = originalLineData;
+            regressionChart.update();
+            
+            // Re-enable the button
+            animationInProgress = false;
+            rotateButton.disabled = false;
+        }
+    }, 30);
+}
+
+// Clear the visualization
+function clearVisualization() {
+    // Reset input fields to default values
+    numObservationsInput.value = 100;
+    varianceXInput.value = 1;
+    varianceErrorInput.value = 400;
+    
+    // Clear validation messages
+    numObservationsValidation.textContent = '';
+    varianceXValidation.textContent = '';
+    varianceErrorValidation.textContent = '';
+    
+    // Update the regression line
+    updateRegressionLine();
 }

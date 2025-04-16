@@ -47,7 +47,7 @@ h1 {
     display: flex;
     flex-wrap: wrap;
     gap: 20px;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     justify-content: space-between;
 }
 
@@ -82,6 +82,49 @@ input:focus {
     margin-top: 5px;
     display: block;
     min-height: 1.2em;
+}
+
+.standard-error {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #0056b3;
+}
+
+.se-display {
+    background-color: #f0f8ff;
+    padding: 10px;
+    border-radius: 5px;
+    border-left: 4px solid #0056b3;
+}
+
+.button-controls {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.control-button {
+    background-color: #0056b3;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    font-size: 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    min-width: 120px;
+}
+
+.control-button:hover {
+    background-color: #003d7a;
+}
+
+.control-button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
 }
 
 /* Responsive adjustments */
