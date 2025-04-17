@@ -12,6 +12,7 @@ let rotateButton;
 let clearButton;
 let animationInProgress = false;
 let originalLineData = []; // Store the original line data for rotation
+let showCIShading = false; // Only show CI shading after Rotate is pressed
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
@@ -55,7 +56,62 @@ function createRegressionChart() {
                     backgroundColor: 'rgba(0, 0, 0, 0)',
                     borderWidth: 2,
                     tension: 0,
-                    fill: false
+                    fill: false,
+                    order: 5
+                },
+                // Fill between regression line and upper CI (green)
+                {
+                    type: 'line',
+                    label: 'Fill Above',
+                    data: [],
+                    borderColor: 'rgba(0,0,0,0)',
+                    backgroundColor: 'rgba(100, 220, 100, 0.18)',
+                    borderWidth: 0,
+                    fill: '+1', // Fill to upper CI
+                    pointRadius: 0,
+                    tension: 0,
+                    order: 1
+                },
+                // Upper CI (dashed line)
+                {
+                    type: 'line',
+                    label: 'Upper CI',
+                    data: [],
+                    borderColor: 'rgba(0, 86, 179, 0.5)',
+                    borderWidth: 1,
+                    borderDash: [6, 4],
+                    pointRadius: 0,
+                    fill: false,
+                    backgroundColor: 'rgba(0,0,0,0)',
+                    tension: 0,
+                    order: 2
+                },
+                // Fill between regression line and lower CI (red)
+                {
+                    type: 'line',
+                    label: 'Fill Below',
+                    data: [],
+                    borderColor: 'rgba(0,0,0,0)',
+                    backgroundColor: 'rgba(255, 100, 100, 0.18)',
+                    borderWidth: 0,
+                    fill: '-2', // Fill to regression line
+                    pointRadius: 0,
+                    tension: 0,
+                    order: 3
+                },
+                // Lower CI (dashed line)
+                {
+                    type: 'line',
+                    label: 'Lower CI',
+                    data: [],
+                    borderColor: 'rgba(0, 86, 179, 0.5)',
+                    borderWidth: 1,
+                    borderDash: [6, 4],
+                    pointRadius: 0,
+                    fill: false,
+                    backgroundColor: 'rgba(0,0,0,0)',
+                    tension: 0,
+                    order: 4
                 }
             ]
         },
@@ -181,15 +237,68 @@ function updateRegressionLine() {
         { x: x1, y: y1 },
         { x: x2, y: y2 }
     ];
-    
     regressionChart.data.datasets[0].data = lineData;
-    
+
+    // Calculate midpoint for CI calculations
+    const midX = (lineData[0].x + lineData[1].x) / 2;
+    const midY = (lineData[0].y + lineData[1].y) / 2;
+
+    // Calculate upper and lower CI lines
+    const originalSlope = 1;
+    const upperBound = originalSlope + 2 * se;
+    const lowerBound = originalSlope - 2 * se;
+    // Both CIs go through the same x1, x2
+    const upperCI = [
+        { x: x1, y: y1 + (upperBound - originalSlope) * (x1 - midX) },
+        { x: x2, y: y2 + (upperBound - originalSlope) * (x2 - midX) }
+    ];
+    const lowerCI = [
+        { x: x1, y: y1 + (lowerBound - originalSlope) * (x1 - midX) },
+        { x: x2, y: y2 + (lowerBound - originalSlope) * (x2 - midX) }
+    ];
+    // Fill between regression line and upper CI (green)
+    regressionChart.data.datasets[1].data = showCIShading ? lineData : [];
+    regressionChart.data.datasets[2].data = showCIShading ? upperCI : [];
+    // Fill between regression line and lower CI (red)
+    regressionChart.data.datasets[3].data = showCIShading ? lineData : [];
+    regressionChart.data.datasets[4].data = showCIShading ? lowerCI : [];
+
+    if (showCIShading) {
+        // Fills and CI lines ON
+        regressionChart.data.datasets[1].fill = '+1';
+        regressionChart.data.datasets[1].backgroundColor = 'rgba(100, 220, 100, 0.18)';
+        regressionChart.data.datasets[2].fill = false;
+        regressionChart.data.datasets[2].backgroundColor = 'rgba(0,0,0,0)';
+        regressionChart.data.datasets[2].borderDash = [6, 4];
+        regressionChart.data.datasets[2].borderColor = 'rgba(0, 86, 179, 0.5)';
+        regressionChart.data.datasets[3].fill = '+1';
+        regressionChart.data.datasets[3].backgroundColor = 'rgba(255, 100, 100, 0.18)';
+        regressionChart.data.datasets[4].fill = false;
+        regressionChart.data.datasets[4].backgroundColor = 'rgba(0,0,0,0)';
+        regressionChart.data.datasets[4].borderDash = [6, 4];
+        regressionChart.data.datasets[4].borderColor = 'rgba(0, 86, 179, 0.5)';
+    } else {
+        // Fills and CI lines OFF
+        regressionChart.data.datasets[1].fill = false;
+        regressionChart.data.datasets[1].backgroundColor = 'rgba(0,0,0,0)';
+        regressionChart.data.datasets[2].fill = false;
+        regressionChart.data.datasets[2].backgroundColor = 'rgba(0,0,0,0)';
+        regressionChart.data.datasets[2].borderDash = [];
+        regressionChart.data.datasets[2].borderColor = 'rgba(0,0,0,0)';
+        regressionChart.data.datasets[3].fill = false;
+        regressionChart.data.datasets[3].backgroundColor = 'rgba(0,0,0,0)';
+        regressionChart.data.datasets[4].fill = false;
+        regressionChart.data.datasets[4].backgroundColor = 'rgba(0,0,0,0)';
+        regressionChart.data.datasets[4].borderDash = [];
+        regressionChart.data.datasets[4].borderColor = 'rgba(0,0,0,0)';
+    }
+
     // Store the original line data for rotation
     originalLineData = [...lineData];
-    
+
     // Update the chart
     regressionChart.update();
-    
+
     // Log the values for debugging
     console.log(`Variance of X: ${varianceX}, v: ${v}, se: ${se}`);
     console.log(`Line points: (${x1}, ${y1}) to (${x2}, ${y2})`);
@@ -222,7 +331,12 @@ function rotateRegressionLine() {
     let animationPhase = 1; // 1: going up, 2: going down, 3: going back to original
     let animationStep = 0;
     const stepsPerPhase = 60; // Steps for each phase of the animation
-    
+
+    // Show CI shading at the start of rotation
+    showCIShading = true;
+    // Immediately update chart to show CI lines and fills
+    updateRegressionLine();
+
     console.log(`Animation bounds: Lower=${lowerBound.toFixed(4)}, Original=${originalSlope}, Upper=${upperBound.toFixed(4)}`);
     
     // Animation interval
@@ -266,21 +380,23 @@ function rotateRegressionLine() {
             if (progress >= 1) {
                 // Animation complete
                 clearInterval(animationInterval);
-                
+
                 // Reset to original line
                 regressionChart.data.datasets[0].data = originalLineData;
-                
+
+                // The CI lines and shading remain unchanged after animation.
+
                 // Reset the current slope display
                 currentSlopeElement.textContent = "1.00";
-                
+
                 regressionChart.update();
-                
+
                 // Re-enable the button
                 animationInProgress = false;
                 rotateButton.disabled = false;
                 console.log(`Animation complete. Returned to original slope: ${originalSlope.toFixed(4)}`);
                 console.log(`Final animation summary: Lower=${lowerBound.toFixed(4)}, Original=${originalSlope}, Upper=${upperBound.toFixed(4)}`);
-                
+
                 return;
             }
         }
@@ -299,10 +415,12 @@ function rotateRegressionLine() {
         
         // Update the line
         regressionChart.data.datasets[0].data = [newPoint1, newPoint2];
-        
+
+        // Do NOT update the confidence intervals during animation; they remain fixed.
+
         // Update the current slope display
         currentSlopeElement.textContent = currentSlope.toFixed(2);
-        
+
         // Update the chart
         regressionChart.update();
     }, 30);
