@@ -7,6 +7,7 @@ let numObservationsValidation;
 let varianceXValidation;
 let varianceErrorValidation;
 let seValueElement;
+let currentSlopeElement;
 let rotateButton;
 let clearButton;
 let animationInProgress = false;
@@ -22,6 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     varianceXValidation = document.getElementById('varianceX-validation');
     varianceErrorValidation = document.getElementById('varianceError-validation');
     seValueElement = document.getElementById('seValue');
+    currentSlopeElement = document.getElementById('currentSlope');
     rotateButton = document.getElementById('rotateButton');
     clearButton = document.getElementById('clearButton');
     
@@ -165,6 +167,9 @@ function updateRegressionLine() {
     // Update the SE value display
     seValueElement.textContent = se.toFixed(2);
     
+    // Reset the current slope display
+    currentSlopeElement.textContent = "1.00";
+    
     // Calculate points for the line with slope 1
     const x1 = 3 - v;
     const y1 = x1; // Since slope is 1 and we want the line to pass through (x1, x1)
@@ -209,7 +214,7 @@ function rotateRegressionLine() {
     // Calculate the upper and lower bounds for the slope
     const originalSlope = 1;
     const upperBound = originalSlope + 2 * se;
-    const lowerBound = Math.max(0.1, originalSlope - 2 * se); // Prevent negative or very small slopes
+    const lowerBound = Math.max(0.01, originalSlope - 2 * se); // Allow very low slopes but prevent negative ones
     
     // Animation control variables
     let currentSlope = originalSlope;
@@ -217,7 +222,7 @@ function rotateRegressionLine() {
     let animationStep = 0;
     const stepsPerPhase = 60; // Steps for each phase of the animation
     
-    console.log(`Animation bounds: Lower=${lowerBound}, Original=${originalSlope}, Upper=${upperBound}`);
+    console.log(`Animation bounds: Lower=${lowerBound.toFixed(4)}, Original=${originalSlope}, Upper=${upperBound.toFixed(4)}`);
     
     // Animation interval
     const animationInterval = setInterval(() => {
@@ -232,17 +237,25 @@ function rotateRegressionLine() {
             if (progress >= 1) {
                 animationPhase = 2;
                 animationStep = 0;
-                console.log(`Phase 1 complete. Reached slope: ${currentSlope}`);
+                console.log(`Phase 1 complete. Reached slope: ${currentSlope.toFixed(4)}`);
             }
         } else if (animationPhase === 2) {
             // Phase 2: Going down to lower bound
             const progress = Math.min(1, animationStep / stepsPerPhase);
+            // Ensure we reach exactly the lower bound at the end of this phase
             currentSlope = upperBound - progress * (upperBound - lowerBound);
+            
+            // Debug output to track the slope during animation
+            if (animationStep % 10 === 0) {
+                console.log(`Phase 2 progress: ${progress.toFixed(2)}, Current slope: ${currentSlope.toFixed(4)}`);
+            }
             
             if (progress >= 1) {
                 animationPhase = 3;
                 animationStep = 0;
-                console.log(`Phase 2 complete. Reached slope: ${currentSlope}`);
+                // Force the slope to exactly match the lower bound at the end of phase 2
+                currentSlope = lowerBound;
+                console.log(`Phase 2 complete. Reached slope: ${currentSlope.toFixed(4)} (Lower bound: ${lowerBound.toFixed(4)})`);
             }
         } else if (animationPhase === 3) {
             // Phase 3: Going back to original slope
@@ -255,12 +268,18 @@ function rotateRegressionLine() {
                 
                 // Reset to original line
                 regressionChart.data.datasets[0].data = originalLineData;
+                
+                // Reset the current slope display
+                currentSlopeElement.textContent = "1.00";
+                
                 regressionChart.update();
                 
                 // Re-enable the button
                 animationInProgress = false;
                 rotateButton.disabled = false;
-                console.log(`Animation complete. Returned to original slope: ${originalSlope}`);
+                console.log(`Animation complete. Returned to original slope: ${originalSlope.toFixed(4)}`);
+                console.log(`Final animation summary: Lower=${lowerBound.toFixed(4)}, Original=${originalSlope}, Upper=${upperBound.toFixed(4)}`);
+                
                 return;
             }
         }
@@ -279,6 +298,9 @@ function rotateRegressionLine() {
         
         // Update the line
         regressionChart.data.datasets[0].data = [newPoint1, newPoint2];
+        
+        // Update the current slope display
+        currentSlopeElement.textContent = currentSlope.toFixed(2);
         
         // Update the chart
         regressionChart.update();
