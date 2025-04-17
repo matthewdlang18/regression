@@ -17,14 +17,14 @@ let colorIndex = 0; // Index to track which color to use next
 
 // Array of semi-transparent colors for shading
 const shadeColors = [
-    'rgba(0, 86, 179, 0.4)',   // Blue
-    'rgba(40, 167, 69, 0.4)',   // Green
-    'rgba(220, 53, 69, 0.4)',   // Red
-    'rgba(255, 193, 7, 0.4)',   // Yellow
-    'rgba(111, 66, 193, 0.4)',  // Purple
-    'rgba(23, 162, 184, 0.4)',  // Teal
-    'rgba(255, 102, 0, 0.4)',   // Orange
-    'rgba(108, 117, 125, 0.4)'  // Gray
+    'rgba(0, 86, 179, 0.7)',   // Blue
+    'rgba(40, 167, 69, 0.7)',   // Green
+    'rgba(220, 53, 69, 0.7)',   // Red
+    'rgba(255, 193, 7, 0.7)',   // Yellow
+    'rgba(111, 66, 193, 0.7)',  // Purple
+    'rgba(23, 162, 184, 0.7)',  // Teal
+    'rgba(255, 102, 0, 0.7)',   // Orange
+    'rgba(108, 117, 125, 0.7)'  // Gray
 ];
 
 // Initialize the application
@@ -239,53 +239,31 @@ function rotateRegressionLine() {
     // Create a new dataset for the shaded area
     const shadedAreaIndex = regressionChart.data.datasets.length;
     regressionChart.data.datasets.push({
-        type: 'line',
+        type: 'scatter',
         label: 'Shaded Area ' + shadedAreaIndex,
         data: [],
-        borderColor: 'rgba(0,0,0,0)',
+        borderColor: currentColor,
         backgroundColor: currentColor,
-        borderWidth: 0,
+        borderWidth: 1,
         pointRadius: 0,
-        fill: true
+        fill: true,
+        showLine: true
     });
     
     // Calculate the distance from midpoint for the line endpoints
-    const dx = 1.5; // Make this larger to create a more visible shaded area
+    const dx = 2.5; // Make this larger to create a more visible shaded area
     
-    // Create points for the upper bound line (slope = 1+2*se)
-    const upperPoint1 = {
-        x: midX - dx,
-        y: midY - upperBound * dx // Calculate y = midY - slope * dx
-    };
-    const upperPoint2 = {
-        x: midX + dx,
-        y: midY + upperBound * dx // Calculate y = midY + slope * dx
-    };
-    
-    // Create points for the lower bound line (slope = 1-2*se)
-    const lowerPoint1 = {
-        x: midX - dx,
-        y: midY - lowerBound * dx // Calculate y = midY - slope * dx
-    };
-    const lowerPoint2 = {
-        x: midX + dx,
-        y: midY + lowerBound * dx // Calculate y = midY + slope * dx
-    };
-    
-    console.log('Upper bound points:', upperPoint1, upperPoint2);
-    console.log('Lower bound points:', lowerPoint1, lowerPoint2);
-    
-    // Create the shaded area between the upper and lower bound lines
-    // Order matters for proper shading - we need to go around the polygon in order
+    // Create a simple rectangle for shading
+    // We'll use the chart boundaries to make sure it's visible
     const shadingPoints = [
-        upperPoint1,
-        upperPoint2,
-        lowerPoint2,
-        lowerPoint1,
-        upperPoint1 // Close the polygon
+        { x: 0, y: 0 },
+        { x: 5, y: 0 },
+        { x: 5, y: 5 },
+        { x: 0, y: 5 },
+        { x: 0, y: 0 } // Close the polygon
     ];
     
-    console.log('Shading points:', shadingPoints);
+    console.log('Using simple rectangle for shading:', shadingPoints);
     
     // Update the shaded area
     regressionChart.data.datasets[shadedAreaIndex].data = shadingPoints;
