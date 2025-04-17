@@ -438,6 +438,8 @@ function clearVisualization() {
     varianceXValidation.textContent = '';
     varianceErrorValidation.textContent = '';
     
-    // Update the regression line
+    // Hide CI shading and lines
+    showCIShading = false;
+    // Update the regression line (no CI lines or shading)
     updateRegressionLine();
 }
