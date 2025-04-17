@@ -202,26 +202,68 @@ function rotateRegressionLine() {
     const midX = (originalLineData[0].x + originalLineData[1].x) / 2;
     const midY = (originalLineData[0].y + originalLineData[1].y) / 2;
     
-    // Original slope is 1
-    let currentSlope = 1;
-    let direction = 1; // 1 for increasing slope, -1 for decreasing
+    // Get the current standard error value
+    const seText = seValueElement.textContent;
+    const se = parseFloat(seText);
+    
+    // Calculate the upper and lower bounds for the slope
+    const originalSlope = 1;
+    const upperBound = originalSlope + 2 * se;
+    const lowerBound = Math.max(0.1, originalSlope - 2 * se); // Prevent negative or very small slopes
+    
+    // Animation control variables
+    let currentSlope = originalSlope;
+    let animationPhase = 1; // 1: going up, 2: going down, 3: going back to original
     let animationStep = 0;
-    const totalSteps = 200; // Total animation steps
-    const maxSlope = 2; // Maximum slope to reach
+    const stepsPerPhase = 60; // Steps for each phase of the animation
+    
+    console.log(`Animation bounds: Lower=${lowerBound}, Original=${originalSlope}, Upper=${upperBound}`);
     
     // Animation interval
     const animationInterval = setInterval(() => {
         animationStep++;
         
-        // Calculate new slope based on animation progress
-        if (direction === 1 && currentSlope >= maxSlope) {
-            direction = -1; // Start decreasing
-        } else if (direction === -1 && currentSlope <= 0) {
-            direction = 1; // Start increasing again
+        // Update slope based on current phase
+        if (animationPhase === 1) {
+            // Phase 1: Going up to upper bound
+            const progress = Math.min(1, animationStep / stepsPerPhase);
+            currentSlope = originalSlope + progress * (upperBound - originalSlope);
+            
+            if (progress >= 1) {
+                animationPhase = 2;
+                animationStep = 0;
+                console.log(`Phase 1 complete. Reached slope: ${currentSlope}`);
+            }
+        } else if (animationPhase === 2) {
+            // Phase 2: Going down to lower bound
+            const progress = Math.min(1, animationStep / stepsPerPhase);
+            currentSlope = upperBound - progress * (upperBound - lowerBound);
+            
+            if (progress >= 1) {
+                animationPhase = 3;
+                animationStep = 0;
+                console.log(`Phase 2 complete. Reached slope: ${currentSlope}`);
+            }
+        } else if (animationPhase === 3) {
+            // Phase 3: Going back to original slope
+            const progress = Math.min(1, animationStep / stepsPerPhase);
+            currentSlope = lowerBound + progress * (originalSlope - lowerBound);
+            
+            if (progress >= 1) {
+                // Animation complete
+                clearInterval(animationInterval);
+                
+                // Reset to original line
+                regressionChart.data.datasets[0].data = originalLineData;
+                regressionChart.update();
+                
+                // Re-enable the button
+                animationInProgress = false;
+                rotateButton.disabled = false;
+                console.log(`Animation complete. Returned to original slope: ${originalSlope}`);
+                return;
+            }
         }
-        
-        // Update slope
-        currentSlope += 0.02 * direction;
         
         // Calculate new points based on the slope and midpoint
         const dx = 1; // Distance from midpoint
@@ -240,19 +282,6 @@ function rotateRegressionLine() {
         
         // Update the chart
         regressionChart.update();
-        
-        // Check if animation is complete
-        if (animationStep >= totalSteps) {
-            clearInterval(animationInterval);
-            
-            // Reset to original line
-            regressionChart.data.datasets[0].data = originalLineData;
-            regressionChart.update();
-            
-            // Re-enable the button
-            animationInProgress = false;
-            rotateButton.disabled = false;
-        }
     }, 30);
 }
 

@@ -37,13 +37,25 @@
                 <span class="validation-message" id="varianceError-validation"></span>
             </div>
         </section>
-        
+
         <section class="standard-error">
             <div class="se-display">
                 <p>Standard Error (se) = <span id="seValue">2.00</span></p>
             </div>
         </section>
-        
+
+        <section class="explanation">
+            <div class="explanation-text">
+                <p>The "Rotate" button animates the regression line to show the 95% confidence interval for the slope:</p>
+                <ol>
+                    <li>First, the line rotates up to a slope of 1+2*se</li>
+                    <li>Then, it rotates down to a slope of 1-2*se</li>
+                    <li>Finally, it returns to the original slope of 1</li>
+                </ol>
+                <p>This visualizes the range of plausible values for the regression coefficient.</p>
+            </div>
+        </section>
+
         <section class="button-controls">
             <button id="rotateButton" class="control-button">Rotate</button>
             <button id="clearButton" class="control-button">Clear</button>

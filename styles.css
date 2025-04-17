@@ -99,6 +99,29 @@ input:focus {
     border-left: 4px solid #0056b3;
 }
 
+.explanation {
+    margin-bottom: 20px;
+}
+
+.explanation-text {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    border-left: 4px solid #28a745;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.explanation-text ol {
+    margin-left: 20px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.explanation-text li {
+    margin-bottom: 5px;
+}
+
 .button-controls {
     display: flex;
     justify-content: center;
