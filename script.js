@@ -226,6 +226,16 @@ function rotateRegressionLine() {
     const currentColor = shadeColors[colorIndex % shadeColors.length];
     colorIndex++; // Increment for next time
     
+    // Get the current standard error value
+    const seText = seValueElement.textContent;
+    const se = parseFloat(seText);
+    
+    // Calculate the upper and lower bounds for the slope
+    const originalSlope = 1;
+    const upperBound = originalSlope + 2 * se;
+    // Allow the lower bound to go negative if needed
+    const lowerBound = originalSlope - 2 * se;
+    
     // Create a new dataset for the shaded area
     const shadedAreaIndex = regressionChart.data.datasets.length;
     regressionChart.data.datasets.push({
@@ -239,24 +249,48 @@ function rotateRegressionLine() {
         fill: true
     });
     
-    // We'll track all points the line passes through during rotation
-    // to create a proper shaded area of exactly where the line has been
-    let shadingPoints = [];
+    // Create points for the upper bound line (slope = 1+2*se)
+    const upperPoint1 = {
+        x: midX - 1,
+        y: midY - upperBound * 1 // Calculate y = midY - slope * dx
+    };
+    const upperPoint2 = {
+        x: midX + 1,
+        y: midY + upperBound * 1 // Calculate y = midY + slope * dx
+    };
     
-    // Start with the original line points
-    shadingPoints.push({ x: originalLineData[0].x, y: originalLineData[0].y });
-    shadingPoints.push({ x: originalLineData[1].x, y: originalLineData[1].y });
+    // Create points for the lower bound line (slope = 1-2*se)
+    const lowerPoint1 = {
+        x: midX - 1,
+        y: midY - lowerBound * 1 // Calculate y = midY - slope * dx
+    };
+    const lowerPoint2 = {
+        x: midX + 1,
+        y: midY + lowerBound * 1 // Calculate y = midY + slope * dx
+    };
     
-    // Get the current standard error value
-    const seText = seValueElement.textContent;
-    const se = parseFloat(seText);
+    // Create the shaded area between the upper and lower bound lines
+    const shadingPoints = [
+        upperPoint1,
+        upperPoint2,
+        lowerPoint2,
+        lowerPoint1,
+        upperPoint1 // Close the polygon
+    ];
     
-    // Calculate the upper and lower bounds for the slope
-    const originalSlope = 1;
-    const upperBound = originalSlope + 2 * se;
-    // Allow the lower bound to go negative if needed
-    const lowerBound = originalSlope - 2 * se;
+    // Update the shaded area
+    regressionChart.data.datasets[shadedAreaIndex].data = shadingPoints;
+    regressionChart.update();
     
+    // Pause briefly to show the shaded area before starting the rotation
+    setTimeout(() => {
+        // Start the rotation animation
+        startRotationAnimation(midX, midY, se, originalSlope, upperBound, lowerBound, shadedAreaIndex);
+    }, 1000); // 1 second delay
+}
+
+// Function to start the rotation animation after showing the shaded area
+function startRotationAnimation(midX, midY, se, originalSlope, upperBound, lowerBound, shadedAreaIndex) {
     // Animation control variables
     let currentSlope = originalSlope;
     let animationPhase = 1; // 1: going up, 2: going down, 3: going back to original
@@ -346,29 +380,8 @@ function rotateRegressionLine() {
         // Update the current slope display
         currentSlopeElement.textContent = currentSlope.toFixed(2);
         
-        // Collect points during the animation to track the path of the line
-        // We'll sample points at regular intervals to create a smooth shaded area
-        
-        // Sample points during the animation (not every frame to avoid too many points)
-        if (animationStep % 3 === 0) {
-            // Add both endpoints of the current line position
-            // This creates a more accurate representation of the area the line crosses
-            shadingPoints.push({ x: newPoint1.x, y: newPoint1.y });
-            shadingPoints.push({ x: newPoint2.x, y: newPoint2.y });
-            
-            // Update the shaded area in real-time
-            regressionChart.data.datasets[shadedAreaIndex].data = [...shadingPoints];
-        }
-        
-        // At the end of the animation, finalize the shaded area
-        if (animationPhase === 3 && progress >= 1) {
-            // Add the original line points again to complete the shape
-            shadingPoints.push({ x: originalLineData[0].x, y: originalLineData[0].y });
-            shadingPoints.push({ x: originalLineData[1].x, y: originalLineData[1].y });
-            
-            // Update the shaded area with all collected points
-            regressionChart.data.datasets[shadedAreaIndex].data = [...shadingPoints];
-        }
+        // We don't need to update the shaded area during rotation
+        // as it was already created before the rotation started
         
         // Update the chart
         regressionChart.update();
