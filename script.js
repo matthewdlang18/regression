@@ -11,21 +11,7 @@ let currentSlopeElement;
 let rotateButton;
 let clearButton;
 let animationInProgress = false;
-let originalLineData = [];
-let shadedAreas = []; // Array to store shaded areas
-let colorIndex = 0; // Index to track which color to use next
-
-// Array of semi-transparent colors for shading
-const shadeColors = [
-    'rgba(0, 86, 179, 0.7)',   // Blue
-    'rgba(40, 167, 69, 0.7)',   // Green
-    'rgba(220, 53, 69, 0.7)',   // Red
-    'rgba(255, 193, 7, 0.7)',   // Yellow
-    'rgba(111, 66, 193, 0.7)',  // Purple
-    'rgba(23, 162, 184, 0.7)',  // Teal
-    'rgba(255, 102, 0, 0.7)',   // Orange
-    'rgba(108, 117, 125, 0.7)'  // Gray
-];
+let originalLineData = []; // Store the original line data for rotation
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
@@ -93,7 +79,7 @@ function createRegressionChart() {
                 },
                 y: {
                     min: -2,
-                    max: 5,
+                    max: 7,
                     title: {
                         display: true,
                         text: 'Y'
@@ -222,10 +208,6 @@ function rotateRegressionLine() {
     const midX = (originalLineData[0].x + originalLineData[1].x) / 2;
     const midY = (originalLineData[0].y + originalLineData[1].y) / 2;
     
-    // Select the next color for shading
-    const currentColor = shadeColors[colorIndex % shadeColors.length];
-    colorIndex++; // Increment for next time
-    
     // Get the current standard error value
     const seText = seValueElement.textContent;
     const se = parseFloat(seText);
@@ -236,50 +218,13 @@ function rotateRegressionLine() {
     // Allow the lower bound to go negative if needed
     const lowerBound = originalSlope - 2 * se;
     
-    // Create a new dataset for the shaded area
-    const shadedAreaIndex = regressionChart.data.datasets.length;
-    regressionChart.data.datasets.push({
-        type: 'scatter',
-        label: 'Shaded Area ' + shadedAreaIndex,
-        data: [],
-        borderColor: currentColor,
-        backgroundColor: currentColor,
-        borderWidth: 1,
-        pointRadius: 0,
-        fill: true,
-        showLine: true
-    });
-    
-    // Calculate the distance from midpoint for the line endpoints
-    const dx = 2.5; // Make this larger to create a more visible shaded area
-    
-    // Create a simple rectangle for shading
-    // We'll use the chart boundaries to make sure it's visible
-    const shadingPoints = [
-        { x: 0, y: 0 },
-        { x: 5, y: 0 },
-        { x: 5, y: 5 },
-        { x: 0, y: 5 },
-        { x: 0, y: 0 } // Close the polygon
-    ];
-    
-    console.log('Using simple rectangle for shading:', shadingPoints);
-    
-    // Update the shaded area
-    regressionChart.data.datasets[shadedAreaIndex].data = shadingPoints;
-    regressionChart.update();
-    
-    // Pause briefly to show the shaded area before starting the rotation
-    setTimeout(() => {
-        // Start the rotation animation
-        startRotationAnimation(midX, midY, se, originalSlope, upperBound, lowerBound, shadedAreaIndex);
-    }, 1000); // 1 second delay
+    // Start the rotation animation immediately without shading
+    startRotationAnimation(midX, midY, se, originalSlope, upperBound, lowerBound);
 }
 
-// Function to start the rotation animation after showing the shaded area
-function startRotationAnimation(midX, midY, se, originalSlope, upperBound, lowerBound, shadedAreaIndex) {
-    // Make sure the shaded area is still visible
-    console.log('Starting rotation with shaded area index:', shadedAreaIndex);
+// Function to start the rotation animation
+function startRotationAnimation(midX, midY, se, originalSlope, upperBound, lowerBound) {
+    console.log('Starting rotation animation');
     // Animation control variables
     let currentSlope = originalSlope;
     let animationPhase = 1; // 1: going up, 2: going down, 3: going back to original
@@ -336,9 +281,6 @@ function startRotationAnimation(midX, midY, se, originalSlope, upperBound, lower
                 // Reset the current slope display
                 currentSlopeElement.textContent = "1.00";
                 
-                // Keep track of the shaded area for clearing later
-                shadedAreas.push(shadedAreaIndex);
-                
                 regressionChart.update();
                 
                 // Re-enable the button
@@ -369,9 +311,6 @@ function startRotationAnimation(midX, midY, se, originalSlope, upperBound, lower
         // Update the current slope display
         currentSlopeElement.textContent = currentSlope.toFixed(2);
         
-        // We don't need to update the shaded area during rotation
-        // as it was already created before the rotation started
-        
         // Update the chart
         regressionChart.update();
     }, 30);
@@ -388,14 +327,6 @@ function clearVisualization() {
     numObservationsValidation.textContent = '';
     varianceXValidation.textContent = '';
     varianceErrorValidation.textContent = '';
-    
-    // Remove all shaded areas
-    if (shadedAreas.length > 0) {
-        // Remove all datasets except the first one (the regression line)
-        regressionChart.data.datasets = [regressionChart.data.datasets[0]];
-        shadedAreas = [];
-        regressionChart.update();
-    }
     
     // Update the regression line
     updateRegressionLine();
