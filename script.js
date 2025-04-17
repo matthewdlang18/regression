@@ -77,7 +77,7 @@ function createRegressionChart() {
                     }
                 },
                 y: {
-                    min: 0,
+                    min: -2,
                     max: 5,
                     title: {
                         display: true,
@@ -214,7 +214,8 @@ function rotateRegressionLine() {
     // Calculate the upper and lower bounds for the slope
     const originalSlope = 1;
     const upperBound = originalSlope + 2 * se;
-    const lowerBound = Math.max(0.01, originalSlope - 2 * se); // Allow very low slopes but prevent negative ones
+    // Allow the lower bound to go negative if needed
+    const lowerBound = originalSlope - 2 * se;
     
     // Animation control variables
     let currentSlope = originalSlope;
@@ -246,8 +247,8 @@ function rotateRegressionLine() {
             currentSlope = upperBound - progress * (upperBound - lowerBound);
             
             // Debug output to track the slope during animation
-            if (animationStep % 10 === 0) {
-                console.log(`Phase 2 progress: ${progress.toFixed(2)}, Current slope: ${currentSlope.toFixed(4)}`);
+            if (animationStep % 5 === 0 || progress > 0.9) {
+                console.log(`Phase 2 progress: ${progress.toFixed(2)}, Current slope: ${currentSlope.toFixed(4)}, Target: ${lowerBound.toFixed(4)}`);
             }
             
             if (progress >= 1) {
