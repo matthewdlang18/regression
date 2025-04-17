@@ -12,6 +12,20 @@ let rotateButton;
 let clearButton;
 let animationInProgress = false;
 let originalLineData = [];
+let shadedAreas = []; // Array to store shaded areas
+let colorIndex = 0; // Index to track which color to use next
+
+// Array of semi-transparent colors for shading
+const shadeColors = [
+    'rgba(0, 86, 179, 0.2)',   // Blue
+    'rgba(40, 167, 69, 0.2)',   // Green
+    'rgba(220, 53, 69, 0.2)',    // Red
+    'rgba(255, 193, 7, 0.2)',   // Yellow
+    'rgba(111, 66, 193, 0.2)',  // Purple
+    'rgba(23, 162, 184, 0.2)',  // Teal
+    'rgba(255, 102, 0, 0.2)',   // Orange
+    'rgba(108, 117, 125, 0.2)'  // Gray
+];
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
@@ -57,6 +71,7 @@ function createRegressionChart() {
                     tension: 0,
                     fill: false
                 }
+                // Shaded areas will be added dynamically
             ]
         },
         options: {
@@ -207,6 +222,28 @@ function rotateRegressionLine() {
     const midX = (originalLineData[0].x + originalLineData[1].x) / 2;
     const midY = (originalLineData[0].y + originalLineData[1].y) / 2;
     
+    // Select the next color for shading
+    const currentColor = shadeColors[colorIndex % shadeColors.length];
+    colorIndex++; // Increment for next time
+    
+    // Create a new dataset for the shaded area
+    const shadedAreaIndex = regressionChart.data.datasets.length;
+    regressionChart.data.datasets.push({
+        type: 'line',
+        label: 'Shaded Area ' + shadedAreaIndex,
+        data: [],
+        borderColor: 'rgba(0,0,0,0)',
+        backgroundColor: currentColor,
+        borderWidth: 0,
+        pointRadius: 0,
+        fill: true
+    });
+    
+    // Track points for shading
+    const shadingPoints = [];
+    // Add the starting point
+    shadingPoints.push({ x: midX - 1, y: midY - 1 });
+    
     // Get the current standard error value
     const seText = seValueElement.textContent;
     const se = parseFloat(seText);
@@ -273,6 +310,13 @@ function rotateRegressionLine() {
                 // Reset the current slope display
                 currentSlopeElement.textContent = "1.00";
                 
+                // Close the shaded area by adding the first point again
+                shadingPoints.push(shadingPoints[0]);
+                regressionChart.data.datasets[shadedAreaIndex].data = [...shadingPoints];
+                
+                // Keep track of the shaded area for clearing later
+                shadedAreas.push(shadedAreaIndex);
+                
                 regressionChart.update();
                 
                 // Re-enable the button
@@ -303,6 +347,21 @@ function rotateRegressionLine() {
         // Update the current slope display
         currentSlopeElement.textContent = currentSlope.toFixed(2);
         
+        // Add points to the shading path based on animation phase
+        if (animationPhase === 1) {
+            // During phase 1 (going up), add the right point
+            shadingPoints.push({ x: newPoint2.x, y: newPoint2.y });
+        } else if (animationPhase === 2) {
+            // During phase 2 (going down), add the right point
+            shadingPoints.push({ x: newPoint2.x, y: newPoint2.y });
+        } else if (animationPhase === 3 && animationStep === 1) {
+            // At the start of phase 3, add the left point to close the loop
+            shadingPoints.push({ x: newPoint1.x, y: newPoint1.y });
+        }
+        
+        // Update the shaded area
+        regressionChart.data.datasets[shadedAreaIndex].data = [...shadingPoints];
+        
         // Update the chart
         regressionChart.update();
     }, 30);
@@ -319,6 +378,14 @@ function clearVisualization() {
     numObservationsValidation.textContent = '';
     varianceXValidation.textContent = '';
     varianceErrorValidation.textContent = '';
+    
+    // Remove all shaded areas
+    if (shadedAreas.length > 0) {
+        // Remove all datasets except the first one (the regression line)
+        regressionChart.data.datasets = [regressionChart.data.datasets[0]];
+        shadedAreas = [];
+        regressionChart.update();
+    }
     
     // Update the regression line
     updateRegressionLine();
