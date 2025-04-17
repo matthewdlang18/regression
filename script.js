@@ -57,7 +57,6 @@ function createRegressionChart() {
                     tension: 0,
                     fill: false
                 }
-                // Shaded areas will be added dynamically
             ]
         },
         options: {
@@ -218,13 +217,6 @@ function rotateRegressionLine() {
     // Allow the lower bound to go negative if needed
     const lowerBound = originalSlope - 2 * se;
     
-    // Start the rotation animation immediately without shading
-    startRotationAnimation(midX, midY, se, originalSlope, upperBound, lowerBound);
-}
-
-// Function to start the rotation animation
-function startRotationAnimation(midX, midY, se, originalSlope, upperBound, lowerBound) {
-    console.log('Starting rotation animation');
     // Animation control variables
     let currentSlope = originalSlope;
     let animationPhase = 1; // 1: going up, 2: going down, 3: going back to original
