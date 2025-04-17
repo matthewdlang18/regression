@@ -17,14 +17,14 @@ let colorIndex = 0; // Index to track which color to use next
 
 // Array of semi-transparent colors for shading
 const shadeColors = [
-    'rgba(0, 86, 179, 0.3)',   // Blue
-    'rgba(40, 167, 69, 0.3)',   // Green
-    'rgba(220, 53, 69, 0.3)',   // Red
-    'rgba(255, 193, 7, 0.3)',   // Yellow
-    'rgba(111, 66, 193, 0.3)',  // Purple
-    'rgba(23, 162, 184, 0.3)',  // Teal
-    'rgba(255, 102, 0, 0.3)',   // Orange
-    'rgba(108, 117, 125, 0.3)'  // Gray
+    'rgba(0, 86, 179, 0.4)',   // Blue
+    'rgba(40, 167, 69, 0.4)',   // Green
+    'rgba(220, 53, 69, 0.4)',   // Red
+    'rgba(255, 193, 7, 0.4)',   // Yellow
+    'rgba(111, 66, 193, 0.4)',  // Purple
+    'rgba(23, 162, 184, 0.4)',  // Teal
+    'rgba(255, 102, 0, 0.4)',   // Orange
+    'rgba(108, 117, 125, 0.4)'  // Gray
 ];
 
 // Initialize the application
@@ -239,14 +239,13 @@ function rotateRegressionLine() {
         fill: true
     });
     
-    // Track points for the shaded area polygon
+    // We'll track all points the line passes through during rotation
+    // to create a proper shaded area of exactly where the line has been
     let shadingPoints = [];
     
-    // Store the original line points to create the shaded area
-    const originalPoint1 = { x: originalLineData[0].x, y: originalLineData[0].y };
-    const originalPoint2 = { x: originalLineData[1].x, y: originalLineData[1].y };
-    
-    // We'll collect points during the animation to form the boundary of the shaded area
+    // Start with the original line points
+    shadingPoints.push({ x: originalLineData[0].x, y: originalLineData[0].y });
+    shadingPoints.push({ x: originalLineData[1].x, y: originalLineData[1].y });
     
     // Get the current standard error value
     const seText = seValueElement.textContent;
@@ -347,36 +346,28 @@ function rotateRegressionLine() {
         // Update the current slope display
         currentSlopeElement.textContent = currentSlope.toFixed(2);
         
-        // Only collect key points at phase transitions to create the shaded area
-        // We don't need to collect points during the entire animation
+        // Collect points during the animation to track the path of the line
+        // We'll sample points at regular intervals to create a smooth shaded area
         
-        // At the end of phase 1 (reached upper bound), collect the endpoint
-        if (animationPhase === 1 && progress >= 1) {
-            // Store the upper bound point
+        // Sample points during the animation (not every frame to avoid too many points)
+        if (animationStep % 3 === 0) {
+            // Add both endpoints of the current line position
+            // This creates a more accurate representation of the area the line crosses
+            shadingPoints.push({ x: newPoint1.x, y: newPoint1.y });
             shadingPoints.push({ x: newPoint2.x, y: newPoint2.y });
-        }
-        // At the end of phase 2 (reached lower bound), collect the endpoint
-        else if (animationPhase === 2 && progress >= 1) {
-            // Store the lower bound point
-            shadingPoints.push({ x: newPoint2.x, y: newPoint2.y });
-        }
-        // At the end of the animation, create the final shaded area
-        else if (animationPhase === 3 && progress >= 1) {
-            // Create a polygon that represents the area swept by the line
-            // Start with the original line points
-            const finalShadingPoints = [
-                originalPoint1,
-                originalPoint2,
-                // Add the upper bound point
-                shadingPoints[0],
-                // Add the lower bound point
-                shadingPoints[1],
-                // Close the polygon by returning to the first point
-                originalPoint1
-            ];
             
-            // Update the shaded area with the final polygon
-            regressionChart.data.datasets[shadedAreaIndex].data = finalShadingPoints;
+            // Update the shaded area in real-time
+            regressionChart.data.datasets[shadedAreaIndex].data = [...shadingPoints];
+        }
+        
+        // At the end of the animation, finalize the shaded area
+        if (animationPhase === 3 && progress >= 1) {
+            // Add the original line points again to complete the shape
+            shadingPoints.push({ x: originalLineData[0].x, y: originalLineData[0].y });
+            shadingPoints.push({ x: originalLineData[1].x, y: originalLineData[1].y });
+            
+            // Update the shaded area with all collected points
+            regressionChart.data.datasets[shadedAreaIndex].data = [...shadingPoints];
         }
         
         // Update the chart
