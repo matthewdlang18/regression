@@ -249,27 +249,34 @@ function rotateRegressionLine() {
         fill: true
     });
     
+    // Calculate the distance from midpoint for the line endpoints
+    const dx = 1.5; // Make this larger to create a more visible shaded area
+    
     // Create points for the upper bound line (slope = 1+2*se)
     const upperPoint1 = {
-        x: midX - 1,
-        y: midY - upperBound * 1 // Calculate y = midY - slope * dx
+        x: midX - dx,
+        y: midY - upperBound * dx // Calculate y = midY - slope * dx
     };
     const upperPoint2 = {
-        x: midX + 1,
-        y: midY + upperBound * 1 // Calculate y = midY + slope * dx
+        x: midX + dx,
+        y: midY + upperBound * dx // Calculate y = midY + slope * dx
     };
     
     // Create points for the lower bound line (slope = 1-2*se)
     const lowerPoint1 = {
-        x: midX - 1,
-        y: midY - lowerBound * 1 // Calculate y = midY - slope * dx
+        x: midX - dx,
+        y: midY - lowerBound * dx // Calculate y = midY - slope * dx
     };
     const lowerPoint2 = {
-        x: midX + 1,
-        y: midY + lowerBound * 1 // Calculate y = midY + slope * dx
+        x: midX + dx,
+        y: midY + lowerBound * dx // Calculate y = midY + slope * dx
     };
     
+    console.log('Upper bound points:', upperPoint1, upperPoint2);
+    console.log('Lower bound points:', lowerPoint1, lowerPoint2);
+    
     // Create the shaded area between the upper and lower bound lines
+    // Order matters for proper shading - we need to go around the polygon in order
     const shadingPoints = [
         upperPoint1,
         upperPoint2,
@@ -277,6 +284,8 @@ function rotateRegressionLine() {
         lowerPoint1,
         upperPoint1 // Close the polygon
     ];
+    
+    console.log('Shading points:', shadingPoints);
     
     // Update the shaded area
     regressionChart.data.datasets[shadedAreaIndex].data = shadingPoints;
@@ -291,6 +300,8 @@ function rotateRegressionLine() {
 
 // Function to start the rotation animation after showing the shaded area
 function startRotationAnimation(midX, midY, se, originalSlope, upperBound, lowerBound, shadedAreaIndex) {
+    // Make sure the shaded area is still visible
+    console.log('Starting rotation with shaded area index:', shadedAreaIndex);
     // Animation control variables
     let currentSlope = originalSlope;
     let animationPhase = 1; // 1: going up, 2: going down, 3: going back to original
